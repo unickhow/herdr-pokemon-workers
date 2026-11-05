@@ -135,6 +135,8 @@ Files in `mods/pokemon-workers/`:
 - Raising `VERSION` in `sprites.js` rebuilds every cached GIF.
 - Commands (`nextCommand`) reach every shown copy of the mod, so with the strip open in two places `scene` advances twice.
   Only the strip copy listens.
+- Small animals only exist for terminals with a `parent` in `terminals()`, i.e. started by an agent with `hc run`. An agent program's
+  in-process helpers (Claude Code's Agent tool) are not terminals and never show. Check with `herdr-app ls`: the agent's `sub_agents`.
 - Sprites are not shipped. Keep it that way: bundling them would take on SpriteCollab's redistribution terms (see `NOTICE.md`).
 - Some species lack some animations; the mod falls back to `Idle`.
 - Beyond 32 agents the campus is crowded: spots run out and the rest wait near the last one.

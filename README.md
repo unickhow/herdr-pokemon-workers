@@ -9,6 +9,10 @@ tired ones sleep on a mat, finished ones wait at the notice board, blocked ones 
 - **One animal per agent, a small one per sub-agent.** An agent is the final form of a starter line (Charizard,
   Greninja, Meowscarada...), its sub-agents are the first form of the same line (Charmander, Froakie...). All nine
   generations, grass, fire and water, plus Pikachu (with Pichu) and the Eevee family (every evolution, with Eevee): 36 lines.
+- **When does a small one show up?** Only for a sub-agent as Herdr defines it: a terminal that an agent started with
+  `hc run` (Herdr records the starter as its `parent`). The helpers that run inside an agent program, such as Claude Code's
+  own Agent tool, are not separate terminals, so Herdr does not report them and no small animal appears. To try it:
+  `hc run --bg -- sleep 120` from a terminal of an agent; a small animal stands beside that agent until the command ends.
 - **Shiny, 1 in 64.** Each animal, big or small, rolls on its own when it first appears and stays that way; shinies twinkle and get a ✦.
 - **Random, and it sticks.** A new agent is dealt a random line (a group nobody on screen has yet, if there is one; the Eevee family counts as one group) and keeps it.
 - **Status you can read at a glance**
