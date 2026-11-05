@@ -12,7 +12,9 @@ and walk around.
 **The strip** (`mod.json`: `{ "place": "top", "size": 168 }`, theme colors throughout):
 
 - One cell per space, left to right, each `flex_1` with a 1px `border` line on its right. The space you are working in (the shown
-  space) is first and has a 1px `accent` frame; inside it the focused agent is first.
+  space) is first and has a 1px `accent` frame; inside it the focused agent is first and has a soft light behind its animal (three
+  concentric ellipses, `#ffe08a` at 11%, 18% and `#fff3c0` at 28%, the largest about 2.1x the animal's width, pulsing in opacity
+  between 60% and 100% every 2.2 s).
 - Each cell is painted like a small outdoor scene, by its status: three sky bands over a 3px grass line, a 2px grass edge and a
   22px plank floor the animals stand on, with their names on it. working: bright day with a sun. idle: evening. done: sunset low on
   the horizon. blocked: red dusk. All asleep or no agents: night with a moon and stars.

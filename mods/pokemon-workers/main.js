@@ -188,6 +188,13 @@ export default class PokemonWorkers extends View {
       .when(s.active, (el) => el.child(div().absolute().inset_0().border_1().border_color(t.accent)));
   }
 
+  // A soft light behind the animal whose agent you are working in: three ellipses, brighter toward the middle, breathing slowly.
+  glow(w, h) {
+    const layer = (kx, ky, color) => div().absolute().left(w / 2 - (w * kx) / 2).top(h / 2 - (h * ky) / 2).w(w * kx).h(h * ky).rounded_full().bg(color);
+    return div().absolute().left(0).top(0).w(w).h(h).loop("opacity", { from: 0.6, to: 1, period: 2200 })
+      .child(layer(2.1, 1.35, "#ffe08a1c")).child(layer(1.6, 1.08, "#ffe08a2e")).child(layer(1.12, 0.84, "#fff3c048"));
+  }
+
   peer(t, p) {
     const line = LINE[p.line], big = this.sprite(line.big[0], p.mood, t);
     const kids = p.kids.slice(0, 2), extra = p.kids.length - kids.length;
@@ -195,7 +202,9 @@ export default class PokemonWorkers extends View {
     const body = h_flex().items_end().gap(2);
     if (big) {
       body.child(
-        div().relative().flex_none().w(big.g.w).h(big.g.h).child(image(big.g.path).w(big.g.w).h(big.g.h))
+        div().relative().flex_none().w(big.g.w).h(big.g.h)
+          .when(p.focused, (el) => el.child(this.glow(big.g.w, big.g.h)))
+          .child(image(big.g.path).w(big.g.w).h(big.g.h))
           .when(p.mood === "sleep", (el) => el.child(image(fx("sleep")).absolute().left(big.g.w - 10).top(-8)))
           .when(p.mood === "blocked", (el) => el.child(image(fx("alert")).absolute().left(big.g.w / 2 - 15).top(-22))),
       );
