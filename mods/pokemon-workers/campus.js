@@ -217,6 +217,18 @@ export class Campus {
     const world = div().absolute().left(ox).top(oy).w(W).h(H).overflow_hidden()
       .child(image(`mods/${MOD}/scenes/${scene}_${this.bucket}.png`).absolute().left(0).top(0).w(W).h(H));
 
+    // the light of the hour, on the scenery only (the animals are drawn after it, so they stay easy to see):
+    // night is a deep blue wash with the lanterns lit; dawn and dusk are orange
+    const night = (1 - tod.L) * 0.5, warm = tod.warm * 0.16;
+    if (night > 0.01) world.child(div().absolute().left(0).top(0).w(W).h(H).bg(`#0b1538${hex2(night * 255)}`));
+    if (warm > 0.01) world.child(div().absolute().left(0).top(0).w(W).h(H).bg(`#ff8c46${hex2(warm * 255)}`));
+    if (night > 0.12) for (const [lx, ly] of L.lamps ?? []) {
+      for (const [r, a] of [[46, 0.05], [40, 0.06], [34, 0.07], [28, 0.08], [22, 0.10], [16, 0.13], [10, 0.18]]) {
+        const rr = r * z, al = hex2(Math.min(1, a * night * 2) * 255);
+        world.child(div().absolute().left(lx * z - rr).top((ly - 12) * z - rr * 0.8).w(rr * 2).h(rr * 1.6).rounded_full().bg(`#ffc86e${al}`));
+      }
+    }
+
     // everyone, back to front
     const items = [];
     for (const p of peers) {
@@ -227,10 +239,8 @@ export class Campus {
     items.sort((a, b) => a.y - b.y);
     for (const it of items) world.child(it.f());
 
-    // night and dusk: colour laid over everything
-    const night = (1 - tod.L) * 0.3, warm = tod.warm * 0.14;
-    if (night > 0.01) world.child(div().absolute().left(0).top(0).w(W).h(H).bg(`#1a2548${hex2(night * 255)}`));
-    if (warm > 0.01) world.child(div().absolute().left(0).top(0).w(W).h(H).bg(`#ff8c46${hex2(warm * 255)}`));
+    // and a thin veil over everything, so the animals are not lit like day at night either
+    if (night > 0.01) world.child(div().absolute().left(0).top(0).w(W).h(H).bg(`#0b1538${hex2(night * 0.22 * 255)}`));
     body.child(world);
     return v_flex().size_full().bg(t.popover).child(bar).child(body);
   }

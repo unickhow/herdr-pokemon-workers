@@ -46,8 +46,11 @@ and walk around.
 - Five scenes with the same layout: Zen garden (raked sand, maples, bamboo, stone lanterns), Meadow (grass, red roof,
   flowers), Greenhouse (white glass roof, palms, ferns), Snow lodge (snow, log walls, snowy pines), Beach hut
   (sand, thatched roof, palms, tiki torches).
-- Time of day follows the computer's clock: a dark blue wash up to 30% at night, an orange wash up to 14% around
-  06:30 and 18:20.
+- Time of day follows the computer's clock. At night (dark by about 19:30, light again by about 07:30) the scenery gets a deep blue
+  wash of up to 50%, the lanterns (`lamps` in `campus.json`) light up with a warm glow (seven stacked ellipses, up to 46 px
+  across at the scene's own scale), and a 11% veil covers the animals too. The wash is drawn between the scene and the animals,
+  so the animals stay easy to see. Around 06:30 and 18:20 an orange wash up to 16% lies over the scenery. The top bar names the
+  moment: Night, Dawn, Day or Dusk.
 
 ## How it behaves
 
@@ -142,7 +145,7 @@ Files in `mods/pokemon-workers/`:
 - Beyond 32 agents the campus is crowded: spots run out and the rest wait near the last one.
 - Animals can walk through each other (there is no animal-to-animal collision). Everything stands in front of the scenery
   (no part of a tree or a wall hides an animal).
-- The sun and moon are not drawn; night is only the color wash.
+- The sun and moon are not drawn; night is the color wash and the lantern light.
 
 ## Done when
 
