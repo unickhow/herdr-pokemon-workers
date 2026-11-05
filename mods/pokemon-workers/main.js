@@ -182,7 +182,7 @@ export default class PokemonWorkers extends View {
       )
       .child(
         h_flex().flex_1().min_h(0).px(6).pb(4).gap(6).items_end().justify_around().overflow_hidden()
-          .when(shown.length === 0, (el) => el.child(div().pb(30).text_size(11).text_color("#b8c0e0").child("no agents")))
+          .when(shown.length === 0, (el) => el.child(div().pb(LABEL_H + 1).child(image(fx("ball")).w(44).h(32))))   // empty: a Poké Ball rocking on the floor
           .children(shown.map((p) => this.peer(t, p))),
       )
       .when(s.active, (el) => el.child(div().absolute().inset_0().border_1().border_color(t.accent)));

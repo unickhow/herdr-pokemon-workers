@@ -73,6 +73,7 @@ export function demoModel() {
     { id: "d3", name: "infra", status: "done", peers: [P("g2fire", "done", "done", ["sleep"]), P("g8grass", "working", "working"), P("g4grass", "idle", "idle")] },
     { id: "d4", name: "docs", status: "idle", peers: [P("g9grass", "idle", "idle")] },
     { id: "d5", name: "scratch", status: "blocked", peers: [P("g6water", "blocked", "blocked", ["working", "sleep"]), P("g7fire", "working", "working")] },
+    { id: "d6", name: "notes", status: "idle", peers: [] },
   ];
 }
 
