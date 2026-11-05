@@ -15,7 +15,7 @@ tired ones sleep on a mat, finished ones wait at the notice board, blocked ones 
   - idle: standing; after 90 seconds of nothing it curls up asleep with a floating Z
   - done: jumping up and down until you look at it
   - blocked: flinching under a red "!"
-- **Click an animal** to jump to its agent.
+- **Click an animal** to jump to its agent. **Right-click a cell** to add an agent (or a plain terminal) to that space.
 - **Five scenes** (Zen garden, Meadow, Greenhouse, Snow lodge, Beach hut), switchable in the Campus. The scene darkens
   and warms with your computer's clock: dawn, day, dusk, night.
 - The campus grows with your agents: it has room for 8, 16 or 32.
@@ -41,7 +41,7 @@ Read this before you install, as Herdr advises for any mod:
 - **Programs.** It runs `curl` and nothing else. You need `curl` on your PATH.
 - **Files.** It writes to `<Herdr app folder>/data/pokemon-workers/` (the downloaded sheets and the GIFs it cuts from
   them) and reads its own folder. It remembers which animal each agent has, and the scene, in Herdr's shared state.
-- **Commands it runs:** `pane.focus` and `agent.focus`, when you click an animal.
+- **Commands it runs:** `pane.focus` and `agent.focus`, when you click an animal; `tab.new`, when you pick something in the right-click menu. It also asks Herdr which agents are installed (`knownAgents`), the same list the built-in "+" menu uses.
 
 ## Art and licenses
 

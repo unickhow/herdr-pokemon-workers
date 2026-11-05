@@ -2,7 +2,7 @@
 // A strip across the top shows one cell per space; "Campus" opens a place where they all live.
 import { View, div, image } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
-import { theme, run, props, openOverlay, closeOverlay, nextCommand } from "herdr";
+import { theme, run, props, openOverlay, closeOverlay, nextCommand, spaces, knownAgents, shared, setShared } from "herdr";
 import { LINE } from "./lines.js";
 import { Sprites, ANIM, creditsReport } from "./sprites.js";
 import { buildModel, demoModel, ensureLines, focusPeer, savedScene, saveScene } from "./model.js";
@@ -10,6 +10,7 @@ import { Campus, MOD, SCENES } from "./campus.js";
 
 const fx = (name) => `mods/${MOD}/fx/${name}.gif`;
 const LABEL_H = 14;
+const NEW_KNOWN = "new-menu.agents";        // the agents Herdr's own "+" menu last found, per machine: reused as a head start
 const FLOOR_H = LABEL_H + 8;                 // the floor the animals stand on, with their names on it
 // sky bands (top, middle, bottom), grass line and grass edge, for each mood of a cell
 const MOODS = {
@@ -24,7 +25,7 @@ const STARS = [[12, 30], [40, 38], [70, 27], [98, 41], [126, 31], [154, 38], [18
 export default class PokemonWorkers extends View {
   init(_p, cx) {
     const pr = props() ?? {};
-    this.view = pr.campus ? "campus" : pr.credits ? "credits" : "strip";
+    this.view = pr.menu ? "menu" : pr.campus ? "campus" : pr.credits ? "credits" : "strip";
     this.demo = !!pr.demo;
     this.hover = null;
     this.dirty = false;
@@ -34,11 +35,47 @@ export default class PokemonWorkers extends View {
     this.report = null;
     if (this.view === "campus") this.campus = new Campus(this);
     if (this.view === "credits") this.loadCredits();
+    if (this.view === "menu") return this.initMenu(cx);
     cx.timer.every(this.view === "campus" ? 170 : 500, (cx) => this.tick(cx));
     // keys.json: "alt-shift-p": "pokemon-workers.campus", "alt-shift-o": "pokemon-workers.scene"
     if (this.view === "strip") {
       cx.spawn(async () => { for (;;) { const c = await nextCommand(); if (c === "campus") this.openCampus(); if (c === "scene") this.nextScene(); if (c === "credits") this.openCredits(); } });
     }
+  }
+
+  // ---- right-click on a cell: add an agent to that space ----
+
+  initMenu(cx) {
+    const pr = props() ?? {}, machine = spaces().find((x) => x.id === pr.space)?.machine ?? null;
+    this.where = machine ?? "";
+    this.agents = shared(NEW_KNOWN)?.[this.where] ?? [];
+    cx.spawn(async (cx) => {
+      try {
+        this.agents = await knownAgents({ on: machine });
+        setShared(NEW_KNOWN, { ...shared(NEW_KNOWN), [this.where]: this.agents });
+      } catch { this.failed = true; }
+      cx.notify();
+    });
+  }
+
+  openMenu(s) {
+    if (this.demo) return;
+    const machine = spaces().find((x) => x.id === s.id)?.machine ?? null;
+    const known = shared(NEW_KNOWN)?.[machine ?? ""];
+    const rows = 1 + (known ? known.filter((a) => a.installed).length : 5);
+    openOverlay({ mod: MOD, kind: "popup", width: 230, height: Math.min(440, 34 + 31 * Math.max(2, rows)), props: { menu: true, space: s.id, name: s.name } });
+  }
+
+  renderMenu() {
+    const t = theme(), pr = props() ?? {}, installed = (this.agents ?? []).filter((a) => a.installed);
+    const row = (id, name, on) => h_flex().id(id).h(31).flex_none().px(9).rounded(7).items_center().cursor_pointer().text_color(t.foreground)
+      .hover((e) => e.bg(t.selected)).on_click(() => { closeOverlay(pr.overlay); on(); }).child(div().flex_1().min_w(0).truncate().child(name));
+    return v_flex().id("pw-menu").size_full().min_h(0).bg(t.popover).p(5).text_size(12.8)
+      .child(div().flex_none().h(24).px(9).text_size(11).text_color(t.dim).truncate().child(`Add to ${pr.name ?? "this space"}`))
+      .child(row("pw-new-terminal", "Terminal", () => run("tab.new", { space: pr.space })))
+      .children(installed.map((a, i) => row(`pw-new-${i}`, a.name, () => run("tab.new", { name: a.name, space: pr.space, argv: a.run }))))
+      .when(!this.agents?.length && !this.failed, (e) => e.child(div().px(9).py(6).text_size(11).text_color(t.dim).child("Looking for agents…")))
+      .when(this.failed, (e) => e.child(div().px(9).py(6).text_size(11).text_color(t.dim).child("Couldn't list agents")));
   }
 
   snapshot() { return this.demo ? demoModel() : buildModel(Date.now()); }
@@ -75,6 +112,7 @@ export default class PokemonWorkers extends View {
 
   render(cx) {
     this.model = this.snapshot();
+    if (this.view === "menu") return this.renderMenu();
     if (this.view === "campus") return this.campus.render(theme());
     if (this.view === "credits") return this.renderCredits();
     return this.renderStrip();
@@ -134,6 +172,7 @@ export default class PokemonWorkers extends View {
   cell(t, s) {
     const shown = s.peers.slice(0, 3), extra = s.peers.length - shown.length, mood = this.cellMood(s);
     return v_flex().id(`pw-cell-${s.id}`).relative().flex_1().min_w(0).h_full().border_r_1().border_color(t.border).overflow_hidden()
+      .on_mouse_down("right", (_e, cx) => { cx.stop_propagation(); this.openMenu(s); })
       .child(this.scenery(mood))
       .child(
         h_flex().h(22).flex_none().px(8).gap(5).items_center()

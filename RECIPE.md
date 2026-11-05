@@ -60,6 +60,9 @@ sub-agent is never `done`. A sub-agent with its own pane is shown as its agent's
 
 - **Click an animal** (strip or campus): `pane.focus {pane}`, or `agent.focus {terminal}` for one without a pane. In the
   campus the dialog then closes.
+- **Right-click a cell** (animals included): a small popup (230px wide) titled `Add to <space>` lists `Terminal` and every installed agent
+  (from `knownAgents`, the list the built-in + menu uses). Picking one runs `tab.new {space, name, argv}` in that cell's space, not the shown one.
+  Not available in demo mode.
 - **Which animal:** each agent is dealt a random line when it first appears (a line no agent has yet, if any is left), and
   keeps it: the choice is saved under the pane id (or terminal address) in shared state `pokemon-workers`, newest 300 kept.
 - **Campus movement:** each agent has a place for its status. `working`: a free desk. `done`: a spot in front of the
@@ -105,7 +108,7 @@ Files in `mods/pokemon-workers/`:
   from the same code; the effects come from pixelfx (MIT).
 - `mod.json`, and `keys.json` at the repository root.
 
-`herdr` functions used: `agents`, `spaces`, `terminals`, `theme`, `run`, `props`, `shared`, `setShared`, `openOverlay`,
+`herdr` functions used: `agents`, `spaces`, `knownAgents`, `terminals`, `theme`, `run`, `props`, `shared`, `setShared`, `openOverlay`,
 `closeOverlay`, `nextCommand`, `exec`, `appHome`, `readTextFile`. Programs run: `curl`. Network: `raw.githubusercontent.com`.
 
 ## Watch out
@@ -133,7 +136,7 @@ Files in `mods/pokemon-workers/`:
   line; sub-agents are smaller and beside their agent with a short line.
 - Changing an agent's status changes its animation within a second: working shakes, done jumps, blocked flinches with a "!",
   idle for 90 s lies asleep with a Z.
-- Clicking an animal focuses its agent.
+- Clicking an animal focuses its agent. Right-clicking a cell opens the add-agent menu for that cell's space.
 - A first start with no data downloads sprites (needs `curl` and a connection), showing pulsing blobs until each is ready, and
   leaves GIFs under `data/pokemon-workers/sprites/<dex>/`. A second start downloads nothing.
 - **Campus** opens; animals walk from the gate to a desk, the park, a mat, the notice board or the help stall according to their
