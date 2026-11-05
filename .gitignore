@@ -1,0 +1,11 @@
+# Sprites are downloaded on the user's machine, never committed
+starters/
+# Personal / local-only material
+local/
+data/
+*.log
+.DS_Store
+# Written into a mod folder by `herdr-app check`
+gpui-kit.d.ts
+herdr.d.ts
+jsconfig.json

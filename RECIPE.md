@@ -1,0 +1,139 @@
+# Pokémon Workers
+
+A strip across the top of the Herdr window with one equal-width cell per space. Every agent in a space is a starter
+Pokémon (the last stage of a line) that acts out its status; an agent's sub-agents stand beside it as the first stage
+of the same line, joined by a short line. A **Campus** button opens a full picture of a place where all the animals live
+and walk around.
+
+![Pokémon Workers](preview.png)
+
+## What you see
+
+**The strip** (`mod.json`: `{ "place": "top", "size": 168 }`, theme colors throughout):
+
+- Background `chrome`. One cell per space, left to right, each `flex_1` with a 1px `border` line on its right.
+- At the far right a 76px column with a 1px left border holding two outlined buttons, **Campus** and **Credits** (11px text,
+  6px radius, `border` outline, `muted` text, `hover` background).
+- Each cell: a 22px header with a 6px dot in the space's status color (`blocked`, `done`, `working`, `idle`, else `dim`),
+  the space name (11px, `muted`, truncated) and, when the space has more than three agents, `+N` (10px, `dim`).
+- Under the header, the animals stand on a 1px `border` line, bottom aligned, spread evenly. At most three agents per
+  cell, the most urgent first (blocked, done, working, idle). Each stands in a column: the animal, the ground line,
+  then its species name (10px, `dim`; on hover `foreground` and `Species · program`).
+- An agent's sub-agents are drawn smaller, to its right, at most two, then `+N`. An 8px by 1px `dim` line floats 16px above
+  the ground between the agent and its first sub-agent (a leash). Sub-agents are the first stage of the agent's line.
+- A space with no agent says "no agents" (11px, `dim`). With no spaces: "No spaces yet."
+- The pictures are animated GIFs, drawn at 2 screen pixels per source pixel times a per-species factor, so every
+  species stands about the same height (roughly 60 screen px for an agent, 36 for a sub-agent).
+- While a species is still downloading, a grey rounded blob pulses in its place (opacity 0.25 to 0.7 every 900 ms).
+
+**The campus** (a dialog, 94% by 92% of the window, background `popover`):
+
+- A 40px top bar: "Campus", a summary (`9 agents · 3 working · 4 resting · 1 done · 1 need you · Dusk`), then five scene
+  chips (the current one has an `accent` outline and `selected` background), **Credits** and **Close**.
+- Below it, one picture scaled to fit (between 0.5x and 2x of the picture's own size), centered. It shows a walled
+  place: a covered veranda with rows of desks at the top left, a notice board on a gravel plaza at the top right, a
+  sleeping area with floor mats at the bottom left, a pond and benches in the middle, a help stall on a second plaza
+  at the bottom right, a gate at the bottom middle, trees, lanterns and other plants around.
+- Five scenes with the same layout: Zen garden (raked sand, maples, bamboo, stone lanterns), Meadow (grass, red roof,
+  flowers), Greenhouse (white glass roof, palms, ferns), Snow lodge (snow, log walls, snowy pines), Beach hut
+  (sand, thatched roof, palms, tiki torches).
+- Time of day follows the computer's clock: a dark blue wash up to 55% at night, an orange wash up to 16% around
+  06:30 and 18:20.
+
+## How it behaves
+
+The status of the agent decides the animal's animation (SpriteCollab animation names in brackets):
+
+| Status | Animal |
+|---|---|
+| `working` | busy, shaking (`Charge`) |
+| `idle` | standing (`Idle`). After 90 s without a change in its tab, or if nothing changed since the app started: lying asleep (`Sleep`) with a looping Z above it |
+| `done` | jumping up and down (`Hop`), until the user looks at it (Herdr then makes it `idle`) |
+| `blocked` | flinching (`Hurt`) with a red "!" popping above it |
+
+Sub-agents use the same animations from their own status: `working` and `blocked` as above, anything else asleep; a
+sub-agent is never `done`. A sub-agent with its own pane is shown as its agent's companion, not as a second agent.
+
+- **Click an animal** (strip or campus): `pane.focus {pane}`, or `agent.focus {terminal}` for one without a pane. In the
+  campus the dialog then closes.
+- **Which animal:** each agent is dealt a random line when it first appears (a line no agent has yet, if any is left), and
+  keeps it: the choice is saved under the pane id (or terminal address) in shared state `pokemon-workers`, newest 300 kept.
+- **Campus movement:** each agent has a place for its status. `working`: a free desk. `done`: a spot in front of the
+  notice board. `blocked`: a spot at the help stall. Asleep: a mat. Awake and `idle`: wanders to random points in the
+  park, a new one every 5 to 13 s. Animals start at the gate, walk around obstacles (A* on a 6px grid, corners
+  pulled tight) at 34 px/s (sub-agents 40), face the way they walk (toward, away, left or right, each its own drawn
+  sprite), stop, and take the animation of their status. When all spots of a kind are taken they wait nearby.
+  Sub-agents keep close beside their agent, finding their own way.
+- The campus has three sizes (room for 8, 16 or 32 agents), picked from the number of agents; it changes as they grow.
+- **Keys:** `pokemon-workers.campus` opens the campus; `pokemon-workers.scene` changes the scene (bound in `keys.json` to
+  `alt-shift-w` and `alt-shift-s`). The scene chosen is saved in shared state.
+- The Credits dialog (660 x 600) states where the art comes from, its license, what was changed, and lists the artists
+  of the sprites currently in use with the license of each contribution.
+- `props { demo: true }` shows made-up spaces and agents (api, web, infra, docs, scratch); that is what `preview.png` shows.
+
+## Built from
+
+Files in `mods/pokemon-workers/`:
+
+- `main.js`: the view. `props().campus` or `props().credits` choose the dialog views, otherwise the strip. Redraws on a
+  500 ms timer only when what is shown changed (time can put an agent to sleep). Opens the dialogs with `openOverlay`.
+- `model.js`: reads `spaces()`, `agents()` and `terminals()` (sub-agents are terminals whose `parent` is the agent's
+  address) into plain data; deals lines (`ensureLines`) and keeps them with `shared`/`setShared`.
+- `lines.js`: the 27 lines: `{ key, kid: [dex, name], big: [dex, name] }`.
+- `sprites.js`: downloads and prepares art. Runs `exec("curl", ...)` for `AnimData.xml`, the `<Anim>-Anim.png` sheets of
+  `Walk Idle Sleep Charge Hop Hurt` and `credits.txt` of a species from
+  `https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/sprite/<dex, 4 digits>/`, plus `credit_names.txt`;
+  stores them under `data/pokemon-workers/` with `fs/promises`; up to 4 species download at once. Cuts one GIF per
+  animation and facing on demand (`<Anim>_<row>_v2.gif`, cached).
+- `anim.js`, `png.js`, `gif.js`: no dependency other than `zlib` (`inflateSync`). `png.js` reads a PNG (8-bit, not
+  interlaced). `anim.js` reads `AnimData.xml`, follows `CopyOf`, crops every facing to the visible pixels of its frames
+  (so a GIF's bottom edge is the animal's feet and its middle its body, and animals stand on the same line whatever the
+  animation), resizes by nearest neighbour and calls `gif.js`, a GIF89a writer (one palette of up to 255 colors, index 0
+  transparent, frame delay from the sheet's durations at 1/60 s, loops forever). The size factor of a species comes from
+  the height of its standing pose (target about 30 source px for agents, 18 for sub-agents, snapped to
+  0.5 0.6 0.667 0.75 0.8 0.9 1 1.25 1.5, left alone within 0.88 to 1.15).
+- `campus.js`: the campus. Loads `campus.json` (per size: width, height, `G` 6, the blocked grid run-length encoded, and
+  points for desks, `reception` (the notice board), `help`, `mats`, the park rectangle and the gate), the scenes
+  `scenes/<scene>_<8|16|32>.png` (drawn at 2 px per source pixel) and the effects `fx/sleep.gif`, `fx/alert.gif`.
+  Each animal is a zero-size anchor element whose `left` and `top` have `transition(..., {duration: 170, easing: "linear"})`,
+  moved every 170 ms; the picture hangs from it with its feet on the anchor. Back to front by y.
+- `scenes/`, `campus.json`, `fx/`: baked by the tools of this repository (`tools/export-hook.js` in the browser prototype)
+  from the same code; the effects come from pixelfx (MIT).
+- `mod.json`, and `keys.json` at the repository root.
+
+`herdr` functions used: `agents`, `spaces`, `terminals`, `theme`, `run`, `props`, `shared`, `setShared`, `openOverlay`,
+`closeOverlay`, `nextCommand`, `exec`, `appHome`, `readTextFile`. Programs run: `curl`. Network: `raw.githubusercontent.com`.
+
+## Watch out
+
+- **Do not rename the folder.** `image()` paths resolve from the app folder, so the scenes and effects are loaded as
+  `mods/pokemon-workers/...`.
+- `fetch` answers have no `arrayBuffer`/`blob`; binary files come from `curl` and `fs.readFile` (which returns a `Uint8Array`).
+  `fs.writeFile` takes a `Uint8Array`. `fs.stat` does not exist.
+- `frames(list, ms)` only cycles text. Animated pictures must be GIFs loaded with `image(path)`.
+- GIFs must stay at or under 255 colors plus transparency.
+- Raising `VERSION` in `sprites.js` rebuilds every cached GIF.
+- Commands (`nextCommand`) reach every shown copy of the mod, so with the strip open in two places `scene` advances twice.
+  Only the strip copy listens.
+- Sprites are not shipped. Keep it that way: bundling them would take on SpriteCollab's redistribution terms (see `NOTICE.md`).
+- Some species lack some animations; the mod falls back to `Idle`.
+- Beyond 32 agents the campus is crowded: spots run out and the rest wait near the last one.
+- Animals can walk through each other (there is no animal-to-animal collision). Everything stands in front of the scenery
+  (no part of a tree or a wall hides an animal).
+- The sun and moon are not drawn; night is only the color wash.
+
+## Done when
+
+- `herdr-app check mods/pokemon-workers` passes and `herdr-app status` shows no errors.
+- With the mod docked on top, each space has a cell; every agent shows a species name under an animal, feet on the ground
+  line; sub-agents are smaller and beside their agent with a short line.
+- Changing an agent's status changes its animation within a second: working shakes, done jumps, blocked flinches with a "!",
+  idle for 90 s lies asleep with a Z.
+- Clicking an animal focuses its agent.
+- A first start with no data downloads sprites (needs `curl` and a connection), showing pulsing blobs until each is ready, and
+  leaves GIFs under `data/pokemon-workers/sprites/<dex>/`. A second start downloads nothing.
+- **Campus** opens; animals walk from the gate to a desk, the park, a mat, the notice board or the help stall according to their
+  status, around obstacles; sub-agents follow; the five scene chips each change the picture; Close and Esc close it.
+- **Credits** lists artists for the sprites in use once they are downloaded.
+- A new agent gets an animal and keeps it after restarting Herdr.
+- `props { demo: true }` in a tab shows five cells with made-up agents.
