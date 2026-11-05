@@ -10,6 +10,16 @@ import { Campus, MOD, SCENES } from "./campus.js";
 
 const fx = (name) => `mods/${MOD}/fx/${name}.gif`;
 const LABEL_H = 14;
+const FLOOR_H = LABEL_H + 5;                 // the dark ground under the animals: ground line, name, padding
+// sky bands (top, middle, bottom), grass line and grass edge, for each mood of a cell
+const MOODS = {
+  working: { s: ["#2a4a6e", "#35597f", "#41698f"], g: ["#6bcf6b", "#48a84e"] },
+  idle: { s: ["#2c3558", "#38426a", "#44507a"], g: ["#5bb064", "#3f8d4c"] },
+  sleep: { s: ["#0f1328", "#151b37", "#1c2343"], g: ["#2d6a55", "#215043"] },
+  done: { s: ["#4a3a6a", "#6a4c78", "#8c5c80"], g: ["#7fd16b", "#4fa853"] },
+  blocked: { s: ["#45202f", "#58283a", "#6a3045"], g: ["#6a9a4a", "#4b7a3a"] },
+};
+const STARS = [[12, 30], [40, 38], [70, 27], [98, 41], [126, 31], [154, 38], [184, 28], [214, 36]];   // below the name row
 
 export default class PokemonWorkers extends View {
   init(_p, cx) {
@@ -97,18 +107,40 @@ export default class PokemonWorkers extends View {
       .hover((e) => e.bg(t.hover)).on_click(on).child(text);
   }
 
+  // How the cell looks: working = a bright day, done = sunset, blocked = a red dusk,
+  // idle = evening, everyone asleep (or nobody there) = night.
+  cellMood(s) {
+    if (s.status === "working" || s.status === "blocked" || s.status === "done") return s.status;
+    return s.peers.length && !s.peers.every((p) => p.mood === "sleep") ? "idle" : "sleep";
+  }
+
+  scenery(mood) {
+    const m = MOODS[mood];
+    const bg = v_flex().absolute().inset_0().overflow_hidden()
+      .child(div().flex_none().h(30).bg(m.s[0])).child(div().flex_none().h(30).bg(m.s[1])).child(div().flex_1().bg(m.s[2]))
+      .child(div().flex_none().h(1).bg(m.g[0])).child(div().flex_none().h(1).bg(m.g[1])).child(div().flex_none().h(FLOOR_H).bg("#262533"));
+    if (mood === "working") bg.child(div().absolute().top(8).right(12).size(11).rounded_full().bg("#ffe27a"));
+    if (mood === "done") bg.child(div().absolute().right(20).bottom(FLOOR_H + 2).w(20).h(10).rounded_t(10).bg("#ffb36b"));
+    if (mood === "sleep") {
+      bg.child(div().absolute().top(7).right(12).size(11).rounded_full().bg("#e9ecff"));
+      for (const [x, y] of STARS) bg.child(div().absolute().left(x).top(y).size(2).bg("#d6dcffcc"));
+    }
+    return bg;
+  }
+
   cell(t, s) {
-    const shown = s.peers.slice(0, 3), extra = s.peers.length - shown.length;
-    return v_flex().id(`pw-cell-${s.id}`).flex_1().min_w(0).h_full().border_r_1().border_color(t.border)
+    const shown = s.peers.slice(0, 3), extra = s.peers.length - shown.length, mood = this.cellMood(s);
+    return v_flex().id(`pw-cell-${s.id}`).relative().flex_1().min_w(0).h_full().border_r_1().border_color(t.border).overflow_hidden()
+      .child(this.scenery(mood))
       .child(
         h_flex().h(22).flex_none().px(8).gap(5).items_center()
           .child(div().flex_none().size(6).rounded_full().bg(t[s.status] ?? t.dim))
-          .child(div().min_w(0).truncate().text_size(11).text_color(t.muted).child(s.name))
-          .when(extra > 0, (el) => el.child(div().flex_none().text_size(10).text_color(t.dim).child(`+${extra}`))),
+          .child(div().min_w(0).truncate().text_size(11).text_color("#e6ebffdd").child(s.name))
+          .when(extra > 0, (el) => el.child(div().flex_none().text_size(10).text_color("#b8c0e0").child(`+${extra}`))),
       )
       .child(
         h_flex().flex_1().min_h(0).px(6).pb(4).gap(6).items_end().justify_around().overflow_hidden()
-          .when(shown.length === 0, (el) => el.child(div().pb(18).text_size(11).text_color(t.dim).child("no agents")))
+          .when(shown.length === 0, (el) => el.child(div().pb(24).text_size(11).text_color("#b8c0e0").child("no agents")))
           .children(shown.map((p) => this.peer(t, p))),
       );
   }
@@ -139,7 +171,7 @@ export default class PokemonWorkers extends View {
       .on_hover((h, cx) => { const n = h ? p.key : this.hover === p.key ? null : this.hover; if (n !== this.hover) { this.hover = n; cx.notify(); } })
       .on_click(() => focusPeer(run, p))
       .child(body)
-      .child(div().w_full().h(1).bg(t.border))
+      .child(div().w_full().h(1))
       .child(div().h(LABEL_H).max_w(150).truncate().text_size(10).text_color(hovered ? t.foreground : t.dim)
         .child(hovered ? `${line.big[1]} · ${p.label}` : line.big[1]));
   }
