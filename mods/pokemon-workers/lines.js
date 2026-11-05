@@ -40,5 +40,7 @@ export const LINES = [
   { key: "eevee_glaceon", group: "eevee", gen: 0, kid: [133, "Eevee"], big: [471, "Glaceon"] },
   { key: "eevee_sylveon", group: "eevee", gen: 0, kid: [133, "Eevee"], big: [700, "Sylveon"] },
 ];
+// the id the sprite loader wants: the dex number, with "s" added for the shiny colours
+export const sid = (n, shiny) => (shiny ? `${n}s` : n);
 export const groupOf = (l) => l.group || l.key;
 export const LINE = Object.fromEntries(LINES.map((l) => [l.key, l]));

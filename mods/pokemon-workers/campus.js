@@ -5,7 +5,7 @@ import { div, image } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { run, readTextFile, appHome, closeOverlay, props } from "herdr";
 import { ANIM } from "./sprites.js";
-import { LINE } from "./lines.js";
+import { LINE, sid } from "./lines.js";
 import { focusPeer, saveScene, savedScene } from "./model.js";
 
 export const MOD = "pokemon-workers";
@@ -242,7 +242,7 @@ export class Campus {
   }
 
   big(t, a, p, z, k) {
-    const id = LINE[p.line].big[0], walking = a.walking && !a.arrived;
+    const id = sid(LINE[p.line].big[0], p.shiny), walking = a.walking && !a.arrived;
     const anim = walking ? ANIM.walk : (ANIM[p.mood] ?? ANIM.idle), row = walking ? a.row : 0;
     const s = this.sprite(t, id, anim, row, k);
     const anchor = this.anchor(a.x, a.y, z).id(`actor-${a.key}`);
@@ -251,20 +251,23 @@ export class Campus {
     anchor.child(image(s.g.path).id(`sprite-${a.key}`).absolute().left(-s.w / 2).top(-s.h).w(s.w).h(s.h)
       .cursor_pointer().on_hover((h, cx) => { const n = h ? a.key : this.hot === a.key ? null : this.hot; if (n !== this.hot) { this.hot = n; cx.notify(); } })
       .on_click(() => { focusPeer(run, p); closeOverlay(props().overlay); }));
+    if (p.shiny) anchor.child(image(`mods/${MOD}/fx/shine.gif`).absolute().left(-s.w / 2 - 4).top(-s.h - 2));
     if (!walking && p.mood === "sleep") anchor.child(image(`mods/${MOD}/fx/sleep.gif`).absolute().left(8 * k).top(-s.h - 6 * k));
     if (!walking && p.mood === "blocked") anchor.child(image(`mods/${MOD}/fx/alert.gif`).absolute().left(-15).top(-s.h - 28));
     if (hot) anchor.child(div().absolute().left(-70).top(4).w(140).flex().justify_center()
       .child(div().px(6).py(2).rounded(5).bg(t.background).border_1().border_color(t.border).text_size(10.5).text_color(t.foreground).whitespace_nowrap()
-        .child(`${LINE[p.line].big[1]} · ${p.label} · ${p.space}`)));
+        .child(`${p.shiny ? "✦ " : ""}${LINE[p.line].big[1]} · ${p.label} · ${p.space}`)));
     return anchor;
   }
 
   kid(t, a, o, kd, z, k) {
-    const id = LINE[a.p.line].kid[0], walking = o.walking && !o.arrived;
+    const id = sid(LINE[a.p.line].kid[0], kd?.shiny), walking = o.walking && !o.arrived;
     const anim = walking ? ANIM.walk : (ANIM[kd?.mood] ?? ANIM.idle), row = walking ? o.row : 0;
     const s = this.sprite(t, id, anim, row, k);
     const anchor = this.anchor(o.x, o.y, z);
     if (!s) return anchor;
-    return anchor.child(image(s.g.path).id(`sprite-${a.key}`).absolute().left(-s.w / 2).top(-s.h).w(s.w).h(s.h));
+    anchor.child(image(s.g.path).id(`sprite-${a.key}`).absolute().left(-s.w / 2).top(-s.h).w(s.w).h(s.h));
+    if (kd?.shiny) anchor.child(image(`mods/${MOD}/fx/shine.gif`).absolute().left(-s.w / 2 - 6).top(-s.h - 4));
+    return anchor;
   }
 }

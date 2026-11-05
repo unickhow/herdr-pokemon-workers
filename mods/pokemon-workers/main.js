@@ -3,7 +3,7 @@
 import { View, div, image } from "gpui-kit";
 import { h_flex, v_flex } from "gpui-base";
 import { theme, run, props, openOverlay, closeOverlay, nextCommand, spaces, knownAgents, shared, setShared } from "herdr";
-import { LINE } from "./lines.js";
+import { LINE, sid } from "./lines.js";
 import { Sprites, ANIM, creditsReport } from "./sprites.js";
 import { buildModel, demoModel, ensureLines, focusPeer, savedScene, saveScene } from "./model.js";
 import { Campus, MOD, SCENES } from "./campus.js";
@@ -82,7 +82,7 @@ export default class PokemonWorkers extends View {
 
   tick(cx) {
     this.model = this.snapshot();
-    if (!this.demo) ensureLines(this.model.flatMap((s) => s.peers.map((p) => p.key)));
+    if (!this.demo) ensureLines(this.model.flatMap((s) => s.peers.map((p) => p.key)), this.model.flatMap((s) => s.peers.flatMap((p) => p.kids.map((k) => k.key))));
     let changed = this.dirty; this.dirty = false;
     if (this.campus) changed = this.campus.tick(Date.now()) || changed;
     else {
@@ -105,7 +105,7 @@ export default class PokemonWorkers extends View {
 
   async loadCredits() {
     const ids = [];
-    for (const s of this.model) for (const p of s.peers) { ids.push(LINE[p.line].big[0], LINE[p.line].kid[0]); }
+    for (const s of this.model) for (const p of s.peers) { ids.push(sid(LINE[p.line].big[0], p.shiny), ...p.kids.map((k) => sid(LINE[p.line].kid[0], k.shiny))); if (!p.kids.length) ids.push(LINE[p.line].kid[0]); }
     this.report = await creditsReport([...new Set(ids)]);
     this.dirty = true;
   }
@@ -196,7 +196,7 @@ export default class PokemonWorkers extends View {
   }
 
   peer(t, p) {
-    const line = LINE[p.line], big = this.sprite(line.big[0], p.mood, t);
+    const line = LINE[p.line], big = this.sprite(sid(line.big[0], p.shiny), p.mood, t);
     const kids = p.kids.slice(0, 2), extra = p.kids.length - kids.length;
     const hovered = this.hover === p.key;
     const body = h_flex().items_end().gap(2);
@@ -205,6 +205,7 @@ export default class PokemonWorkers extends View {
         div().relative().flex_none().w(big.g.w).h(big.g.h)
           .when(p.focused, (el) => el.child(this.glow(big.g.w, big.g.h)))
           .child(image(big.g.path).w(big.g.w).h(big.g.h))
+          .when(p.shiny, (el) => el.child(image(fx("shine")).absolute().left(-4).top(-2)))
           .when(p.mood === "sleep", (el) => el.child(image(fx("sleep")).absolute().left(big.g.w - 10).top(-8)))
           .when(p.mood === "blocked", (el) => el.child(image(fx("alert")).absolute().left(big.g.w / 2 - 15).top(-22))),
       );
@@ -214,8 +215,8 @@ export default class PokemonWorkers extends View {
     if (kids.length) {
       body.child(div().flex_none().w(8).h(1).bg(t.dim).mb(16));          // the leash: this one belongs to the big one
       for (const k of kids) {
-        const s = this.sprite(line.kid[0], k.mood, t);
-        body.child(s ? div().flex_none().w(s.g.w).h(s.g.h).child(image(s.g.path).w(s.g.w).h(s.g.h)) : div().flex_none().w(20).h(22).rounded_full().bg(t.dim));
+        const s = this.sprite(sid(line.kid[0], k.shiny), k.mood, t);
+        body.child(s ? div().relative().flex_none().w(s.g.w).h(s.g.h).child(image(s.g.path).w(s.g.w).h(s.g.h)).when(k.shiny, (el) => el.child(image(fx("shine")).absolute().left(-6).top(-4))) : div().flex_none().w(20).h(22).rounded_full().bg(t.dim));
       }
       if (extra > 0) body.child(div().flex_none().text_size(10).text_color(t.dim).mb(4).child(`+${extra}`));
     }
@@ -225,7 +226,7 @@ export default class PokemonWorkers extends View {
       .child(body)
       .child(div().w_full().h(1))
       .child(div().h(LABEL_H).max_w(150).truncate().text_size(10).text_color(hovered ? t.foreground : t.dim)
-        .child(hovered ? `${line.big[1]} · ${p.label}` : line.big[1]));
+        .child((p.shiny ? "✦ " : "") + (hovered ? `${line.big[1]} · ${p.label}` : line.big[1])));
   }
 
   // ---- credits ----

@@ -9,6 +9,8 @@ const RANK = { blocked: 4, done: 3, working: 2, idle: 1 };
 
 const state = () => { const s = shared(KEY); return s && typeof s === "object" ? s : {}; };
 export const savedLines = () => (state().lines && typeof state().lines === "object" ? state().lines : {});
+export const SHINY_ODDS = 64;               // 1 in 64 for every big animal and every small one, each rolled on its own
+const savedShiny = () => (state().shiny && typeof state().shiny === "object" ? state().shiny : {});
 export const savedScene = () => state().scene || "zen";
 export function saveScene(scene) { setShared(KEY, { ...state(), scene }); }
 
@@ -23,8 +25,8 @@ const leastUsed = (items, count) => {
   const min = Math.min(...items.map(count)), pool = items.filter((i) => count(i) === min);
   return pool[Math.floor(Math.random() * pool.length)];
 };
-export function ensureLines(keys) {
-  const saved = savedLines(), used = {}, groupUsed = {}, fresh = {};
+export function ensureLines(keys, kidKeys = []) {
+  const saved = savedLines(), shinies = savedShiny(), used = {}, groupUsed = {}, fresh = {}, freshShiny = {};
   const note = (key) => { used[key] = (used[key] || 0) + 1; groupUsed[groupOf(LINE[key])] = (groupUsed[groupOf(LINE[key])] || 0) + 1; };
   for (const k of keys) if (saved[k] && LINE[saved[k]]) note(saved[k]);
   for (const k of keys) {
@@ -33,12 +35,14 @@ export function ensureLines(keys) {
     const pick = leastUsed(LINES.filter((l) => groupOf(l) === group), (l) => used[l.key] || 0).key;
     fresh[k] = pick; note(pick);
   }
-  if (Object.keys(fresh).length) {
-    const next = { ...saved, ...fresh }, ks = Object.keys(next);
-    for (let i = 0; i < ks.length - 300; i++) delete next[ks[i]];     // forget the oldest
-    setShared(KEY, { ...state(), lines: next });
+  // shiny: rolled once when an animal first appears and remembered either way (1 = shiny, 0 = not)
+  for (const k of [...keys, ...kidKeys]) if (shinies[k] === undefined && freshShiny[k] === undefined) freshShiny[k] = Math.random() * SHINY_ODDS < 1 ? 1 : 0;
+  if (Object.keys(fresh).length || Object.keys(freshShiny).length) {
+    const trim = (m) => { const ks = Object.keys(m); for (let i = 0; i < ks.length - 300; i++) delete m[ks[i]]; return m; };    // forget the oldest
+    setShared(KEY, { ...state(), lines: trim({ ...saved, ...fresh }), shiny: trim({ ...shinies, ...freshShiny }) });
   }
 }
+const shinyOf = (key) => savedShiny()[key] === 1;
 const lineOf = (key) => savedLines()[key] || LINES[hash(key) % LINES.length].key;
 
 const kidMood = (s) => (s === "working" ? "working" : s === "blocked" ? "blocked" : "sleep");
@@ -63,8 +67,8 @@ export function buildModel(now) {
       const key = a.pane || a.address;
       return {
         key, addr: a.address, pane: a.pane, label: a.program?.name || a.app || "agent", status: a.status, focused: !!a.focused,
-        mood: moodOf(a.status, tabs[a.tab]?.changed_at, now), line: lineOf(key),
-        kids: kidsOf(a.address).map((k) => ({ addr: k.address, mood: kidMood(kidStatus(listed.get(k.address) ?? k.status)) })),
+        mood: moodOf(a.status, tabs[a.tab]?.changed_at, now), line: lineOf(key), shiny: shinyOf(key),
+        kids: kidsOf(a.address).map((k) => ({ key: "k:" + k.address, addr: k.address, shiny: shinyOf("k:" + k.address), mood: kidMood(kidStatus(listed.get(k.address) ?? k.status)) })),
       };
     }).sort((a, b) => (b.focused ? 1 : 0) - (a.focused ? 1 : 0) || (RANK[b.status] ?? 0) - (RANK[a.status] ?? 0));
     return { id: s.id, name: s.name, status: s.status, active: !!s.active, peers };
@@ -73,10 +77,10 @@ export function buildModel(now) {
 
 // Made-up data for screenshots and trying it out: props { demo: true }
 export function demoModel() {
-  const P = (line, status, mood, kids = []) => ({ key: line, addr: line, pane: "", label: "agent", status, focused: false, mood, line, kids: kids.map((m) => ({ addr: "", mood: m })) });
+  const P = (line, status, mood, kids = [], shiny = false) => ({ key: line, addr: line, pane: "", label: "agent", status, focused: false, mood, line, shiny, kids: kids.map((m) => ({ key: "", addr: "", mood: [].concat(m)[0], shiny: [].concat(m)[1] === "shiny" })) });   // a kid is a mood, or [mood, "shiny"]
   return [
-    { id: "d1", name: "api", status: "working", active: true, peers: [P("g1fire", "working", "working", ["working", "sleep"]), P("g3water", "idle", "sleep")] },
-    { id: "d2", name: "web", status: "idle", peers: [P("pikachu", "idle", "sleep", ["sleep"])] },
+    { id: "d1", name: "api", status: "working", active: true, peers: [P("g1fire", "working", "working", ["working", "sleep"], true), P("g3water", "idle", "sleep")] },
+    { id: "d2", name: "web", status: "idle", peers: [P("pikachu", "idle", "sleep", [["sleep", "shiny"]])] },
     { id: "d3", name: "infra", status: "done", peers: [P("g2fire", "done", "done", ["sleep"]), P("g8grass", "working", "working"), P("g4grass", "idle", "idle")] },
     { id: "d4", name: "docs", status: "idle", peers: [P("eevee_umbreon", "idle", "idle", ["working"])] },
     { id: "d5", name: "scratch", status: "blocked", peers: [P("g6water", "blocked", "blocked", ["working", "sleep"]), P("g7fire", "working", "working")] },

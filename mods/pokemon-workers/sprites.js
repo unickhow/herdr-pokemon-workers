@@ -15,6 +15,10 @@ const VERSION = 2;               // bump when the GIF recipe changes, so old cac
 // What each status looks like, in SpriteCollab's animation names.
 export const ANIM = { working: "Charge", done: "Hop", blocked: "Hurt", sleep: "Sleep", idle: "Idle", walk: "Walk" };
 const pad = (n) => String(n).padStart(4, "0");
+// A sprite id is a dex number, or the number plus "s" for the shiny colours ("25s"). SpriteCollab keeps shinies in sprite/<dex>/0000/0001/.
+const parse = (id) => ({ n: parseInt(String(id), 10), shiny: String(id).endsWith("s") });
+const dirName = (id) => pad(parse(id).n) + (parse(id).shiny ? "s" : "");
+const remote = (id) => `${SRC}/sprite/${pad(parse(id).n)}${parse(id).shiny ? "/0000/0001" : ""}`;
 const exists = (p) => fs.exists(p).catch(() => false);
 
 async function curl(pairs) {
@@ -96,10 +100,10 @@ export class Sprites {
     const cur = this.meta[id];
     if (cur && !cur.error) return cur;
     if (cur?.error && Date.now() - cur.at < 60000) throw new Error(cur.error);
-    const dir = `${DATA}/sprites/${pad(id)}`;
+    const dir = `${DATA}/sprites/${dirName(id)}`;
     await fs.mkdir(dir, { recursive: true });
     const xml = `${dir}/AnimData.xml`;
-    if (!(await exists(xml))) await curl([[xml, `${SRC}/sprite/${pad(id)}/AnimData.xml`]]);
+    if (!(await exists(xml))) await curl([[xml, `${remote(id)}/AnimData.xml`]]);
     const anims = parseAnimData(await fs.readFile(xml, "utf8"));
     const sheets = {};
     for (const name of Object.values(ANIM)) {
@@ -107,10 +111,10 @@ export class Sprites {
       if (a) sheets[name] = a;
     }
     const todo = [];
-    for (const n of new Set(Object.values(sheets).map((a) => a.name))) if (!(await exists(`${dir}/${n}.png`))) todo.push([`${dir}/${n}.png`, `${SRC}/sprite/${pad(id)}/${n}-Anim.png`]);
+    for (const n of new Set(Object.values(sheets).map((a) => a.name))) if (!(await exists(`${dir}/${n}.png`))) todo.push([`${dir}/${n}.png`, `${remote(id)}/${n}-Anim.png`]);
     if (todo.length) await curl(todo);
     // the credits are best-effort: they are only needed to show who drew the art
-    if (!(await exists(`${dir}/credits.txt`))) await curl([[`${dir}/credits.txt`, `${SRC}/sprite/${pad(id)}/credits.txt`]]).catch(() => {});
+    if (!(await exists(`${dir}/credits.txt`))) await curl([[`${dir}/credits.txt`, `${remote(id)}/credits.txt`]]).catch(() => {});
     const idle = sheets.Idle ?? sheets.Walk;
     const stage = LINE_STAGE(id);
     const norm = normalScale(standHeight(decodePng(new Uint8Array(await fs.readFile(`${dir}/${idle.name}.png`))), idle), stage);
@@ -119,7 +123,7 @@ export class Sprites {
 
   async build({ id, name, row }) {
     const m = await this.ensure(id);
-    const file = `${m.dir}/${name}_${row}_v${VERSION}.gif`, rel = `${DATA_REL}/sprites/${pad(id)}/${name}_${row}_v${VERSION}.gif`;
+    const file = `${m.dir}/${name}_${row}_v${VERSION}.gif`, rel = `${DATA_REL}/sprites/${dirName(id)}/${name}_${row}_v${VERSION}.gif`;
     if (await exists(file)) { const b = await fs.readFile(file); return { path: rel, ...gifSize(b) }; }
     const a = m.sheets[name] ?? m.sheets.Idle;
     const sheet = decodePng(new Uint8Array(await fs.readFile(`${m.dir}/${a.name}.png`)));
@@ -130,7 +134,8 @@ export class Sprites {
 }
 
 function LINE_STAGE(id) {
-  for (const k of Object.keys(LINE)) { if (LINE[k].big[0] === id) return 3; if (LINE[k].kid[0] === id) return 1; }
+  const n = parse(id).n;
+  for (const k of Object.keys(LINE)) { if (LINE[k].big[0] === n) return 3; if (LINE[k].kid[0] === n) return 1; }
   return 3;
 }
 
@@ -149,7 +154,7 @@ export async function creditsReport(ids) {
   const by = {};
   for (const id of ids) {
     let txt = "";
-    try { txt = await fs.readFile(`${DATA}/sprites/${pad(id)}/credits.txt`, "utf8"); } catch { continue; }
+    try { txt = await fs.readFile(`${DATA}/sprites/${dirName(id)}/credits.txt`, "utf8"); } catch { continue; }
     for (const line of txt.split("\n")) {
       const f = line.split("\t"); if (f.length < 4) continue;
       const who = f[1].trim(), info = names[who];

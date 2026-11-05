@@ -68,6 +68,11 @@ sub-agent is never `done`. A sub-agent with its own pane is shown as its agent's
 - **Right-click a cell** (animals included): a small popup (230px wide) titled `Add to <space>` lists `Terminal` and every installed agent
   (from `knownAgents`, the list the built-in + menu uses). Picking one runs `tab.new {space, name, argv}` in that cell's space, not the shown one.
   Not available in demo mode.
+- **Shiny:** every big animal and every small one rolls once, when it first appears, a 1 in 64 chance (`SHINY_ODDS` in
+  `model.js`) of being shiny, each on its own, so a sub-agent can be shiny under a normal agent and the other way round. The
+  roll is remembered either way (shared state `pokemon-workers`, `shiny`, key = pane id, or `k:` + the sub-agent's address;
+  newest 300 kept). A shiny shows the shiny colours (SpriteCollab `sprite/<dex>/0000/0001/`) with a small twinkling star
+  (`fx/shine.gif`, 22 x 22 px) at its upper left, and a big one has a "✦" before its name (strip and campus tooltip).
 - **Which animal:** each agent is dealt a random line when it first appears, and keeps it. The draw is in two steps so a family
   counts once: a group, then a line in it. Every line is its own group except the eight Eevee evolutions, which are one group.
   So with 10 lines of which 4 are Eevee evolutions there are 7 groups, each 1/7, and each evolution 1/28 (in the real list: 29
@@ -94,7 +99,7 @@ Files in `mods/pokemon-workers/`:
 - `model.js`: reads `spaces()`, `agents()` and `terminals()` (sub-agents are terminals whose `parent` is the agent's
   address) into plain data; deals lines (`ensureLines`) and keeps them with `shared`/`setShared`.
 - `lines.js`: the 36 lines (27 starter lines, Pikachu with Pichu, and the eight Eevee evolutions with Eevee): `{ key, group?, kid: [dex, name], big: [dex, name] }`.
-- `sprites.js`: downloads and prepares art. Runs `exec("curl", ...)` for `AnimData.xml`, the `<Anim>-Anim.png` sheets of
+- `sprites.js`: downloads and prepares art. A sprite id is the dex number, or the number plus `s` for the shiny colours (cached in `sprites/<dex>s/`). Runs `exec("curl", ...)` for `AnimData.xml`, the `<Anim>-Anim.png` sheets of
   `Walk Idle Sleep Charge Hop Hurt` and `credits.txt` of a species from
   `https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/sprite/<dex, 4 digits>/`, plus `credit_names.txt`;
   stores them under `data/pokemon-workers/` with `fs/promises`; up to 4 species download at once. Cuts one GIF per
@@ -111,7 +116,7 @@ Files in `mods/pokemon-workers/`:
   `scenes/<scene>_<8|16|32>.png` (drawn at 2 px per source pixel) and the effects `fx/sleep.gif`, `fx/alert.gif`.
   Each animal is a zero-size anchor element whose `left` and `top` have `transition(..., {duration: 170, easing: "linear"})`,
   moved every 170 ms; the picture hangs from it with its feet on the anchor. Back to front by y.
-- `fx/ball.gif`: drawn from shapes by `tools/make-ball-gif.mjs` (no outside art).
+- `fx/ball.gif`, `fx/shine.gif`: drawn from shapes by `tools/make-ball-gif.mjs` and `tools/make-shine-gif.mjs` (no outside art).
 - `scenes/`, `campus.json`, `fx/`: baked by the tools of this repository (`tools/export-hook.js` in the browser prototype)
   from the same code; the effects come from pixelfx (MIT).
 - `mod.json`, and `keys.json` at the repository root.
@@ -151,4 +156,4 @@ Files in `mods/pokemon-workers/`:
   status, around obstacles; sub-agents follow; the five scene chips each change the picture; Close and Esc close it.
 - **Credits** lists artists for the sprites in use once they are downloaded.
 - A new agent gets an animal and keeps it after restarting Herdr.
-- `props { demo: true }` in a tab shows six cells with made-up agents; the last one is empty and shows the Poké Ball.
+- `props { demo: true }` in a tab shows six cells with made-up agents (a shiny Charizard and a shiny Pichu among them); the last one is empty and shows the Poké Ball.
