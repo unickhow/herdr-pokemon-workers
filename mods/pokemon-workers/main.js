@@ -10,7 +10,7 @@ import { Campus, MOD, SCENES } from "./campus.js";
 
 const fx = (name) => `mods/${MOD}/fx/${name}.gif`;
 const LABEL_H = 14;
-const FLOOR_H = LABEL_H + 5;                 // the dark ground under the animals: ground line, name, padding
+const FLOOR_H = LABEL_H + 8;                 // the floor the animals stand on, with their names on it
 // sky bands (top, middle, bottom), grass line and grass edge, for each mood of a cell
 const MOODS = {
   working: { s: ["#2a4a6e", "#35597f", "#41698f"], g: ["#6bcf6b", "#48a84e"] },
@@ -118,9 +118,12 @@ export default class PokemonWorkers extends View {
     const m = MOODS[mood];
     const bg = v_flex().absolute().inset_0().overflow_hidden()
       .child(div().flex_none().h(30).bg(m.s[0])).child(div().flex_none().h(30).bg(m.s[1])).child(div().flex_1().bg(m.s[2]))
-      .child(div().flex_none().h(1).bg(m.g[0])).child(div().flex_none().h(1).bg(m.g[1])).child(div().flex_none().h(FLOOR_H).bg("#262533"));
+      .child(div().flex_none().h(3).bg(m.g[0])).child(div().flex_none().h(2).bg(m.g[1]))
+      .child(v_flex().flex_none().h(FLOOR_H).bg("#262533")                         // planks: a light edge, then three bands
+        .child(div().flex_none().h(1).bg("#454460")).child(div().flex_none().h(7).bg("#34334a"))
+        .child(div().flex_none().h(7).bg("#2a2939")).child(div().flex_1().bg("#34334a")));
     if (mood === "working") bg.child(div().absolute().top(8).right(12).size(11).rounded_full().bg("#ffe27a"));
-    if (mood === "done") bg.child(div().absolute().right(20).bottom(FLOOR_H + 2).w(20).h(10).rounded_t(10).bg("#ffb36b"));
+    if (mood === "done") bg.child(div().absolute().right(20).bottom(FLOOR_H + 4).w(20).h(10).rounded_t(10).bg("#ffb36b"));
     if (mood === "sleep") {
       bg.child(div().absolute().top(7).right(12).size(11).rounded_full().bg("#e9ecff"));
       for (const [x, y] of STARS) bg.child(div().absolute().left(x).top(y).size(2).bg("#d6dcffcc"));
@@ -140,9 +143,10 @@ export default class PokemonWorkers extends View {
       )
       .child(
         h_flex().flex_1().min_h(0).px(6).pb(4).gap(6).items_end().justify_around().overflow_hidden()
-          .when(shown.length === 0, (el) => el.child(div().pb(24).text_size(11).text_color("#b8c0e0").child("no agents")))
+          .when(shown.length === 0, (el) => el.child(div().pb(30).text_size(11).text_color("#b8c0e0").child("no agents")))
           .children(shown.map((p) => this.peer(t, p))),
-      );
+      )
+      .when(s.active, (el) => el.child(div().absolute().inset_0().border_1().border_color(t.accent)));
   }
 
   peer(t, p) {

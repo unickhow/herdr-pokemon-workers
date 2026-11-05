@@ -228,8 +228,8 @@ export class Campus {
     for (const it of items) world.child(it.f());
 
     // night and dusk: colour laid over everything
-    const night = (1 - tod.L) * 0.55, warm = tod.warm * 0.16;
-    if (night > 0.01) world.child(div().absolute().left(0).top(0).w(W).h(H).bg(`#0c1234${hex2(night * 255)}`));
+    const night = (1 - tod.L) * 0.3, warm = tod.warm * 0.14;
+    if (night > 0.01) world.child(div().absolute().left(0).top(0).w(W).h(H).bg(`#1a2548${hex2(night * 255)}`));
     if (warm > 0.01) world.child(div().absolute().left(0).top(0).w(W).h(H).bg(`#ff8c46${hex2(warm * 255)}`));
     body.child(world);
     return v_flex().size_full().bg(t.popover).child(bar).child(body);

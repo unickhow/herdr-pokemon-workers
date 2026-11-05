@@ -55,20 +55,20 @@ export function buildModel(now) {
     const peers = ag.filter((a) => a.space === s.id && !isKid.has(a.address)).map((a) => {
       const key = a.pane || a.address;
       return {
-        key, addr: a.address, pane: a.pane, label: a.program?.name || a.app || "agent", status: a.status,
+        key, addr: a.address, pane: a.pane, label: a.program?.name || a.app || "agent", status: a.status, focused: !!a.focused,
         mood: moodOf(a.status, tabs[a.tab]?.changed_at, now), line: lineOf(key),
         kids: kidsOf(a.address).map((k) => ({ addr: k.address, mood: kidMood(kidStatus(listed.get(k.address) ?? k.status)) })),
       };
-    }).sort((a, b) => (RANK[b.status] ?? 0) - (RANK[a.status] ?? 0));
-    return { id: s.id, name: s.name, status: s.status, peers };
-  });
+    }).sort((a, b) => (b.focused ? 1 : 0) - (a.focused ? 1 : 0) || (RANK[b.status] ?? 0) - (RANK[a.status] ?? 0));
+    return { id: s.id, name: s.name, status: s.status, active: !!s.active, peers };
+  }).sort((a, b) => (b.active ? 1 : 0) - (a.active ? 1 : 0));   // the space you are working in comes first
 }
 
 // Made-up data for screenshots and trying it out: props { demo: true }
 export function demoModel() {
-  const P = (line, status, mood, kids = []) => ({ key: line, addr: line, pane: "", label: "agent", status, mood, line, kids: kids.map((m) => ({ addr: "", mood: m })) });
+  const P = (line, status, mood, kids = []) => ({ key: line, addr: line, pane: "", label: "agent", status, focused: false, mood, line, kids: kids.map((m) => ({ addr: "", mood: m })) });
   return [
-    { id: "d1", name: "api", status: "working", peers: [P("g1fire", "working", "working", ["working", "sleep"]), P("g3water", "idle", "sleep")] },
+    { id: "d1", name: "api", status: "working", active: true, peers: [P("g1fire", "working", "working", ["working", "sleep"]), P("g3water", "idle", "sleep")] },
     { id: "d2", name: "web", status: "idle", peers: [P("g5water", "idle", "sleep")] },
     { id: "d3", name: "infra", status: "done", peers: [P("g2fire", "done", "done", ["sleep"]), P("g8grass", "working", "working"), P("g4grass", "idle", "idle")] },
     { id: "d4", name: "docs", status: "idle", peers: [P("g9grass", "idle", "idle")] },

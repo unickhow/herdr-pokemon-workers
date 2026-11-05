@@ -11,11 +11,15 @@ and walk around.
 
 **The strip** (`mod.json`: `{ "place": "top", "size": 168 }`, theme colors throughout):
 
-- Background `chrome`. One cell per space, left to right, each `flex_1` with a 1px `border` line on its right.
+- One cell per space, left to right, each `flex_1` with a 1px `border` line on its right. The space you are working in (the shown
+  space) is first and has a 1px `accent` frame; inside it the focused agent is first.
+- Each cell is painted like a small outdoor scene, by its status: three sky bands over a 3px grass line, a 2px grass edge and a
+  22px plank floor the animals stand on, with their names on it. working: bright day with a sun. idle: evening. done: sunset low on
+  the horizon. blocked: red dusk. All asleep or no agents: night with a moon and stars.
 - At the far right a 76px column with a 1px left border holding two outlined buttons, **Campus** and **Credits** (11px text,
   6px radius, `border` outline, `muted` text, `hover` background).
 - Each cell: a 22px header with a 6px dot in the space's status color (`blocked`, `done`, `working`, `idle`, else `dim`),
-  the space name (11px, `muted`, truncated) and, when the space has more than three agents, `+N` (10px, `dim`).
+  the space name (11px, light, truncated) and, when the space has more than three agents, `+N` (10px, `dim`).
 - Under the header, the animals stand on a 1px `border` line, bottom aligned, spread evenly. At most three agents per
   cell, the most urgent first (blocked, done, working, idle). Each stands in a column: the animal, the ground line,
   then its species name (10px, `dim`; on hover `foreground` and `Species · program`).
@@ -37,7 +41,7 @@ and walk around.
 - Five scenes with the same layout: Zen garden (raked sand, maples, bamboo, stone lanterns), Meadow (grass, red roof,
   flowers), Greenhouse (white glass roof, palms, ferns), Snow lodge (snow, log walls, snowy pines), Beach hut
   (sand, thatched roof, palms, tiki torches).
-- Time of day follows the computer's clock: a dark blue wash up to 55% at night, an orange wash up to 16% around
+- Time of day follows the computer's clock: a dark blue wash up to 30% at night, an orange wash up to 14% around
   06:30 and 18:20.
 
 ## How it behaves
