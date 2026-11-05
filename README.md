@@ -8,8 +8,8 @@ tired ones sleep on a mat, finished ones wait at the notice board, blocked ones 
 
 - **One animal per agent, a small one per sub-agent.** An agent is the final form of a starter line (Charizard,
   Greninja, Meowscarada...), its sub-agents are the first form of the same line (Charmander, Froakie...). All nine
-  generations, grass, fire and water: 27 lines.
-- **Random, and it sticks.** A new agent is dealt a random line (one nobody on screen has yet, if there is one) and keeps it.
+  generations, grass, fire and water, plus Pikachu (with Pichu) and the Eevee family (every evolution, with Eevee): 36 lines.
+- **Random, and it sticks.** A new agent is dealt a random line (a group nobody on screen has yet, if there is one; the Eevee family counts as one group) and keeps it.
 - **Status you can read at a glance**
   - working: busy, shaking over its work
   - idle: standing; after 90 seconds of nothing it curls up asleep with a floating Z

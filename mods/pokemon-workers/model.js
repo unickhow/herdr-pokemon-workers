@@ -1,7 +1,7 @@
 // What the window shows, as plain data: spaces, their agents, each agent's sub-agents and mood,
 // and which starter line every agent was given.
 import { agents, spaces, terminals, shared, setShared } from "herdr";
-import { LINES } from "./lines.js";
+import { LINES, LINE, groupOf } from "./lines.js";
 
 export const KEY = "pokemon-workers";          // shared state: { lines: { <pane or address>: <line key> }, scene }
 export const SLEEP_AFTER = 90 * 1000;          // idle this long: falls asleep
@@ -14,17 +14,24 @@ export function saveScene(scene) { setShared(KEY, { ...state(), scene }); }
 
 function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return h >>> 0; }
 
-// A new agent gets a random starter line, one nobody on screen has yet if there is one.
-// Remembered per agent (by pane), so an agent keeps its animal for good.
+// A new agent is dealt a random line, which it keeps for good (remembered per agent, by pane). Lines are drawn in two steps so a
+// family counts once: first a group (every line is its own group, except the Eevee evolutions, which share one), then a line
+// inside it. With 10 lines of which 4 are one family, each of the 7 groups has chance 1/7 and each family member 1/28.
+// A group (and a line inside it) that nobody on screen has yet is preferred while there is one.
+const GROUPS = [...new Set(LINES.map(groupOf))];
+const leastUsed = (items, count) => {
+  const min = Math.min(...items.map(count)), pool = items.filter((i) => count(i) === min);
+  return pool[Math.floor(Math.random() * pool.length)];
+};
 export function ensureLines(keys) {
-  const saved = savedLines(), used = {}, fresh = {};
-  for (const k of keys) if (saved[k]) used[saved[k]] = (used[saved[k]] || 0) + 1;
+  const saved = savedLines(), used = {}, groupUsed = {}, fresh = {};
+  const note = (key) => { used[key] = (used[key] || 0) + 1; groupUsed[groupOf(LINE[key])] = (groupUsed[groupOf(LINE[key])] || 0) + 1; };
+  for (const k of keys) if (saved[k] && LINE[saved[k]]) note(saved[k]);
   for (const k of keys) {
-    if (saved[k] || fresh[k]) continue;
-    const min = Math.min(...LINES.map((l) => used[l.key] || 0));
-    const pool = LINES.filter((l) => (used[l.key] || 0) === min);
-    const pick = pool[Math.floor(Math.random() * pool.length)].key;
-    fresh[k] = pick; used[pick] = (used[pick] || 0) + 1;
+    if ((saved[k] && LINE[saved[k]]) || fresh[k]) continue;
+    const group = leastUsed(GROUPS, (g) => groupUsed[g] || 0);
+    const pick = leastUsed(LINES.filter((l) => groupOf(l) === group), (l) => used[l.key] || 0).key;
+    fresh[k] = pick; note(pick);
   }
   if (Object.keys(fresh).length) {
     const next = { ...saved, ...fresh }, ks = Object.keys(next);
@@ -69,9 +76,9 @@ export function demoModel() {
   const P = (line, status, mood, kids = []) => ({ key: line, addr: line, pane: "", label: "agent", status, focused: false, mood, line, kids: kids.map((m) => ({ addr: "", mood: m })) });
   return [
     { id: "d1", name: "api", status: "working", active: true, peers: [P("g1fire", "working", "working", ["working", "sleep"]), P("g3water", "idle", "sleep")] },
-    { id: "d2", name: "web", status: "idle", peers: [P("g5water", "idle", "sleep")] },
+    { id: "d2", name: "web", status: "idle", peers: [P("pikachu", "idle", "sleep", ["sleep"])] },
     { id: "d3", name: "infra", status: "done", peers: [P("g2fire", "done", "done", ["sleep"]), P("g8grass", "working", "working"), P("g4grass", "idle", "idle")] },
-    { id: "d4", name: "docs", status: "idle", peers: [P("g9grass", "idle", "idle")] },
+    { id: "d4", name: "docs", status: "idle", peers: [P("eevee_umbreon", "idle", "idle", ["working"])] },
     { id: "d5", name: "scratch", status: "blocked", peers: [P("g6water", "blocked", "blocked", ["working", "sleep"]), P("g7fire", "working", "working")] },
     { id: "d6", name: "notes", status: "idle", peers: [] },
   ];

@@ -68,8 +68,10 @@ sub-agent is never `done`. A sub-agent with its own pane is shown as its agent's
 - **Right-click a cell** (animals included): a small popup (230px wide) titled `Add to <space>` lists `Terminal` and every installed agent
   (from `knownAgents`, the list the built-in + menu uses). Picking one runs `tab.new {space, name, argv}` in that cell's space, not the shown one.
   Not available in demo mode.
-- **Which animal:** each agent is dealt a random line when it first appears (a line no agent has yet, if any is left), and
-  keeps it: the choice is saved under the pane id (or terminal address) in shared state `pokemon-workers`, newest 300 kept.
+- **Which animal:** each agent is dealt a random line when it first appears, and keeps it. The draw is in two steps so a family
+  counts once: a group, then a line in it. Every line is its own group except the eight Eevee evolutions, which are one group.
+  So with 10 lines of which 4 are Eevee evolutions there are 7 groups, each 1/7, and each evolution 1/28 (in the real list: 29
+  groups, each 1/29, each evolution 1/232). A group no agent has yet is preferred while there is one. The choice is saved under the pane id (or terminal address) in shared state `pokemon-workers`, newest 300 kept.
 - **Campus movement:** each agent has a place for its status. `working`: a free desk. `done`: a spot in front of the
   notice board. `blocked`: a spot at the help stall. Asleep: a mat. Awake and `idle`: wanders to random points in the
   park, a new one every 5 to 13 s. Animals start at the gate, walk around obstacles (A* on a 6px grid, corners
@@ -91,7 +93,7 @@ Files in `mods/pokemon-workers/`:
   500 ms timer only when what is shown changed (time can put an agent to sleep). Opens the dialogs with `openOverlay`.
 - `model.js`: reads `spaces()`, `agents()` and `terminals()` (sub-agents are terminals whose `parent` is the agent's
   address) into plain data; deals lines (`ensureLines`) and keeps them with `shared`/`setShared`.
-- `lines.js`: the 27 lines: `{ key, kid: [dex, name], big: [dex, name] }`.
+- `lines.js`: the 36 lines (27 starter lines, Pikachu with Pichu, and the eight Eevee evolutions with Eevee): `{ key, group?, kid: [dex, name], big: [dex, name] }`.
 - `sprites.js`: downloads and prepares art. Runs `exec("curl", ...)` for `AnimData.xml`, the `<Anim>-Anim.png` sheets of
   `Walk Idle Sleep Charge Hop Hurt` and `credits.txt` of a species from
   `https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/sprite/<dex, 4 digits>/`, plus `credit_names.txt`;

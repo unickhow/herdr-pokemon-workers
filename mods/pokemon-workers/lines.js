@@ -1,4 +1,4 @@
-// The starter lines: stage 1 is a sub-agent, stage 3 is the agent. Numbers are national dex numbers,
+// The lines: a small one is the sub-agent, a big one is the agent (for the starters, stage 1 and stage 3). Numbers are national dex numbers,
 // which is also how SpriteCollab names its sprite folders.
 export const LINES = [
   { key: "g1grass", gen: 1, kid: [1, "Bulbasaur"], big: [3, "Venusaur"] },
@@ -28,5 +28,17 @@ export const LINES = [
   { key: "g9grass", gen: 9, kid: [906, "Sprigatito"], big: [908, "Meowscarada"] },
   { key: "g9fire", gen: 9, kid: [909, "Fuecoco"], big: [911, "Skeledirge"] },
   { key: "g9water", gen: 9, kid: [912, "Quaxly"], big: [914, "Quaquaval"] },
+  { key: "pikachu", gen: 0, kid: [172, "Pichu"], big: [25, "Pikachu"] },
+  // The Eevee family counts as ONE group when an agent is dealt an animal (see ensureLines): the group is as likely as any
+  // other line, and inside it every evolution is equally likely. They all have Eevee as the sub-agent.
+  { key: "eevee_vaporeon", group: "eevee", gen: 0, kid: [133, "Eevee"], big: [134, "Vaporeon"] },
+  { key: "eevee_jolteon", group: "eevee", gen: 0, kid: [133, "Eevee"], big: [135, "Jolteon"] },
+  { key: "eevee_flareon", group: "eevee", gen: 0, kid: [133, "Eevee"], big: [136, "Flareon"] },
+  { key: "eevee_espeon", group: "eevee", gen: 0, kid: [133, "Eevee"], big: [196, "Espeon"] },
+  { key: "eevee_umbreon", group: "eevee", gen: 0, kid: [133, "Eevee"], big: [197, "Umbreon"] },
+  { key: "eevee_leafeon", group: "eevee", gen: 0, kid: [133, "Eevee"], big: [470, "Leafeon"] },
+  { key: "eevee_glaceon", group: "eevee", gen: 0, kid: [133, "Eevee"], big: [471, "Glaceon"] },
+  { key: "eevee_sylveon", group: "eevee", gen: 0, kid: [133, "Eevee"], big: [700, "Sylveon"] },
 ];
+export const groupOf = (l) => l.group || l.key;
 export const LINE = Object.fromEntries(LINES.map((l) => [l.key, l]));
