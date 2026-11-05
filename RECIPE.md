@@ -11,8 +11,9 @@ and walk around.
 
 **The strip** (`mod.json`: `{ "place": "top", "size": 168 }`, theme colors throughout):
 
-- One cell per space, left to right, each `flex_1` with a 1px `border` line on its right. The space you are working in (the shown
-  space) is first and has a 1px `accent` frame; inside it the focused agent is first and has a soft light behind its animal (three
+- One cell per space, left to right, each `flex_1` with a 1px `border` line on its right. The cells are ordered: the space you are working in (the shown
+  space) first, then blocked, done, working, and idle last (same order inside a status as Herdr lists them). The shown space
+  has a 1px `accent` frame; inside it the focused agent is first and has a soft light behind its animal (three
   concentric ellipses, `#ffe08a` at 11%, 18% and `#fff3c0` at 28%, the largest about 2.1x the animal's width, pulsing in opacity
   between 60% and 100% every 2.2 s).
 - Each cell is painted like a small outdoor scene, by its status: three sky bands over a 3px grass line, a 2px grass edge and a

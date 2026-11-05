@@ -61,7 +61,7 @@ export function buildModel(now) {
       };
     }).sort((a, b) => (b.focused ? 1 : 0) - (a.focused ? 1 : 0) || (RANK[b.status] ?? 0) - (RANK[a.status] ?? 0));
     return { id: s.id, name: s.name, status: s.status, active: !!s.active, peers };
-  }).sort((a, b) => (b.active ? 1 : 0) - (a.active ? 1 : 0));   // the space you are working in comes first
+  }).sort((a, b) => (b.active ? 1 : 0) - (a.active ? 1 : 0) || (RANK[b.status] ?? 1) - (RANK[a.status] ?? 1));   // the space you are working in first, then blocked, done, working, idle last
 }
 
 // Made-up data for screenshots and trying it out: props { demo: true }
