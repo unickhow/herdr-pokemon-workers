@@ -220,8 +220,10 @@ export class Campus {
     // the light of the hour, on the scenery only (the animals are drawn after it, so they stay easy to see):
     // night is a deep blue wash with the lanterns lit; dawn and dusk are orange
     const night = (1 - tod.L) * 0.5, warm = tod.warm * 0.16;
-    if (night > 0.01) world.child(div().absolute().left(0).top(0).w(W).h(H).bg(`#0b1538${hex2(night * 255)}`));
-    if (warm > 0.01) world.child(div().absolute().left(0).top(0).w(W).h(H).bg(`#ff8c46${hex2(warm * 255)}`));
+    const washes = [];                                // the same light again, for the desks drawn a second time in front of the animals
+    if (night > 0.01) washes.push(`#0b1538${hex2(night * 255)}`);
+    if (warm > 0.01) washes.push(`#ff8c46${hex2(warm * 255)}`);
+    for (const c of washes) world.child(div().absolute().left(0).top(0).w(W).h(H).bg(c));
     if (night > 0.12) for (const [lx, ly] of L.lamps ?? []) {
       for (const [r, a] of [[46, 0.05], [40, 0.06], [34, 0.07], [28, 0.08], [22, 0.10], [16, 0.13], [10, 0.18]]) {
         const rr = r * z, al = hex2(Math.min(1, a * night * 2) * 255);
@@ -234,7 +236,12 @@ export class Campus {
     for (const p of peers) {
       const a = this.actors[p.key]; if (!a) continue;
       a.kids.forEach((o, j) => items.push({ y: o.y, f: () => this.kid(t, a, o, p.kids[j], z, k) }));
-      items.push({ y: a.y, f: () => this.big(t, a, p, z, k) });
+      items.push({ y: a.y, f: () => this.big(t, a, p, z, k, this.seated(a, p) ? -4 : 0) });
+      // a working animal that has reached its desk sits behind the laptop (the screen faces it): drawn just after it
+      if (this.seated(a, p)) {
+        items.push({ y: a.y + 0.005, f: () => this.desk(a, z, W, H, `mods/${MOD}/scenes/${scene}_${this.bucket}.png`, washes) });
+        items.push({ y: a.y + 0.01, f: () => this.laptop(a, z) });
+      }
     }
     items.sort((a, b) => a.y - b.y);
     for (const it of items) world.child(it.f());
@@ -251,11 +258,11 @@ export class Campus {
       .transition("left", { duration: 170, easing: "linear" }).transition("top", { duration: 170, easing: "linear" });
   }
 
-  big(t, a, p, z, k) {
+  big(t, a, p, z, k, dy = 0) {
     const id = sid(LINE[p.line].big[0], p.shiny), walking = a.walking && !a.arrived;
     const anim = walking ? ANIM.walk : (ANIM[p.mood] ?? ANIM.idle), row = walking ? a.row : 0;
     const s = this.sprite(t, id, anim, row, k);
-    const anchor = this.anchor(a.x, a.y, z).id(`actor-${a.key}`);
+    const anchor = this.anchor(a.x, a.y + dy, z).id(`actor-${a.key}`);
     if (!s) return anchor.child(div().absolute().left(-8).top(-18).w(16).h(18).rounded_full().bg(t.muted).loop("opacity", { from: 0.3, to: 0.8, period: 900 }));
     const hot = this.hot === a.key;
     anchor.child(image(s.g.path).id(`sprite-${a.key}`).absolute().left(-s.w / 2).top(-s.h).w(s.w).h(s.h)
@@ -268,6 +275,22 @@ export class Campus {
       .child(div().px(6).py(2).rounded(5).bg(t.background).border_1().border_color(t.border).text_size(10.5).text_color(t.foreground).whitespace_nowrap()
         .child(`${p.shiny ? "✦ " : ""}${LINE[p.line].big[1]} · ${p.label} · ${p.space}`)));
     return anchor;
+  }
+
+  seated(a, p) { return p.mood === "working" && a.zone === "desk" && a.arrived && !a.walking; }
+
+  // the tabletop of its desk, cut out of the scenery and drawn again over the animal, so the animal sits behind the desk
+  desk(a, z, W, H, src, washes) {
+    const x0 = (a.x - 18) * z, y0 = (a.y - 9) * z;
+    const box = div().absolute().left(x0).top(y0).w(36 * z).h(16 * z).overflow_hidden()
+      .child(image(src).absolute().left(-x0).top(-y0).w(W).h(H));
+    for (const c of washes) box.child(div().absolute().left(0).top(0).w(36 * z).h(16 * z).bg(c));
+    return box;
+  }
+
+  // the laptop on the desk, over the one painted into the scenery (18 x 13 scenery px, resting on the tabletop)
+  laptop(a, z) {
+    return this.anchor(a.x, a.y, z).child(image(`mods/${MOD}/fx/laptop.gif`).absolute().left(-9 * z).top(-14 * z).w(18 * z).h(13 * z));
   }
 
   kid(t, a, o, kd, z, k) {
