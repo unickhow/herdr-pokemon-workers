@@ -206,6 +206,7 @@ export default class PokemonWorkers extends View {
           .when(p.focused, (el) => el.child(this.glow(big.g.w, big.g.h)))
           .child(image(big.g.path).w(big.g.w).h(big.g.h))
           .when(p.shiny, (el) => el.child(image(fx("shine")).absolute().left(-4).top(-2)))
+          .when(p.mood === "working", (el) => el.child(image(fx("laptop")).w(36).h(26).absolute().left(big.g.w / 2 - 18).top(big.g.h - 24)))   // a laptop in front of it
           .when(p.mood === "sleep", (el) => el.child(image(fx("sleep")).absolute().left(big.g.w - 10).top(-8)))
           .when(p.mood === "blocked", (el) => el.child(image(fx("alert")).absolute().left(big.g.w / 2 - 15).top(-22))),
       );

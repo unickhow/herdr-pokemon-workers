@@ -28,6 +28,7 @@ and walk around.
   then its species name (10px, `dim`; on hover `foreground` and `Species · program`).
 - An agent's sub-agents are drawn smaller, to its right, at most two, then `+N`. An 8px by 1px `dim` line floats 16px above
   the ground between the agent and its first sub-agent (a leash). Sub-agents are the first stage of the agent's line.
+- A working big animal has a small laptop in front of it (36 x 26 px GIF, `fx/laptop.gif`, seen from behind: the screen faces the animal, with a breathing logo).
 - A space with no agent shows a Poké Ball (44 x 32 px GIF, `fx/ball.gif`) standing in the middle of the floor. It stays still
   for 0.9 s, rocks left and right twice (about 0.1 s a step, up to 22 degrees about its bottom), stays still for 1.3 s, and
   repeats, like a capture in progress. With no spaces: "No spaces yet."
@@ -119,7 +120,7 @@ Files in `mods/pokemon-workers/`:
   `scenes/<scene>_<8|16|32>.png` (drawn at 2 px per source pixel) and the effects `fx/sleep.gif`, `fx/alert.gif`.
   Each animal is a zero-size anchor element whose `left` and `top` have `transition(..., {duration: 170, easing: "linear"})`,
   moved every 170 ms; the picture hangs from it with its feet on the anchor. Back to front by y.
-- `fx/ball.gif`, `fx/shine.gif`: drawn from shapes by `tools/make-ball-gif.mjs` and `tools/make-shine-gif.mjs` (no outside art).
+- `fx/ball.gif`, `fx/shine.gif`, `fx/laptop.gif`: drawn from shapes by `tools/make-ball-gif.mjs`, `tools/make-shine-gif.mjs` and `tools/make-laptop-gif.mjs` (no outside art).
 - `scenes/`, `campus.json`, `fx/`: baked by the tools of this repository (`tools/export-hook.js` in the browser prototype)
   from the same code; the effects come from pixelfx (MIT).
 - `mod.json`, and `keys.json` at the repository root.
